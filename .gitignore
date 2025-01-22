@@ -1,0 +1,8 @@
+# Ignore Python virtual environments
+ml_env/
+
+# Ignore compiled libraries
+*.dylib
+
+# Ignore other large files or folders
+*.so
