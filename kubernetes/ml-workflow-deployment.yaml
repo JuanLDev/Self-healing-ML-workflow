@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-workflow
+  labels:
+    app: ml-workflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-workflow
+  template:
+    metadata:
+      labels:
+        app: ml-workflow
+    spec:
+      containers:
+      - name: ml-workflow
+        image: ml-workflow:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          failureThreshold: 5
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

@@ -2,3 +2,7 @@ tensorflow
 numpy
 pandas
 boto3
+scikit-learn
+minio
+requests
+flask
