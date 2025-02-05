@@ -15,7 +15,7 @@ COMPANIES = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
 BASE_URL = "https://www.alphavantage.co/query"
 
 # MinIO configuration
-MINIO_URL = "localhost:9000"
+MINIO_URL = "minio-service.default.svc.cluster.local:9000"
 MINIO_ACCESS_KEY = "admin"
 MINIO_SECRET_KEY = "password"
 RAW_DATA_BUCKET = "raw-data"
