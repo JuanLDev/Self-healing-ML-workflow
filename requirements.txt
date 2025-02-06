@@ -6,3 +6,4 @@ scikit-learn
 minio
 requests
 flask
+prometheus_client

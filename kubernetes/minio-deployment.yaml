@@ -21,6 +21,8 @@ spec:
         - server
         - /data
         env:
+        - name: MINIO_PROMETHEUS_AUTH_TYPE
+          value: "public"
         - name: MINIO_ROOT_USER
           value: "admin"
         - name: MINIO_ROOT_PASSWORD
