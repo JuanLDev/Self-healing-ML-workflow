@@ -9,30 +9,33 @@ data:
   prometheus.yml: |
     global:
       scrape_interval: 15s
+
     scrape_configs:
-      - job_name: 'kubernetes-pods'
+      # 1) Discover all pods in the cluster and scrape those with the proper annotation
+      - job_name: 'kubernetes-pods-annotation'
         kubernetes_sd_configs:
-          - role: pod
-      - job_name: 'ml-workflow'
-        static_configs:
-          - targets: ['ml-workflow.default.svc.cluster.local:8080']
+        - role: pod
+        relabel_configs:
+          # Only keep pods that have an annotation: prometheus.io/scrape: "true"
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+
+          # If a pod has an annotation prometheus.io/path: "/metrics", use that as metrics path
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.*)
+
+          # If a pod has an annotation prometheus.io/port: "8080", use that port for scraping
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(.*)
+            replacement: $1:$2
+            target_label: __address__
+
+      # 2) Scrape MinIO metrics
       - job_name: 'minio'
         metrics_path: '/minio/metrics/v3'
         static_configs:
           - targets: ['minio-service.default.svc.cluster.local:9000']
-      - job_name: 'node-exporter'
-        kubernetes_sd_configs:
-          - role: pod
-            # If it's in `kube-system` namespace, specify that:
-            namespaces:
-              names: ["kube-system"]
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_label_k8s_app]
-            regex: node-exporter
-            action: keep
-
-          # Only keep the container port 9100
-          - source_labels: [__meta_kubernetes_pod_container_port_number]
-            regex: "9100"
-            action: keep
-

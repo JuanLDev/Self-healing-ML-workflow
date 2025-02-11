@@ -1,0 +1,10 @@
+FROM python:3.8-slim
+
+WORKDIR /app
+
+COPY requirements_fetch.txt /app/requirements_fetch.txt
+RUN pip install --no-cache-dir -r requirements_fetch.txt
+
+COPY data_fetch.py /app/
+
+CMD ["python", "data_fetch.py"]

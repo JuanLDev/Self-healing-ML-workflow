@@ -1,26 +1,26 @@
+import os
 import requests
 import pandas as pd
 from time import sleep
 from datetime import datetime, timedelta
 from minio import Minio
-import io  # Import io to handle byte streams
+import io  
 
-# Alpha Vantage API key
-API_KEY = "LHQ19J02WBX5VBCX"
+# If you're running in Kubernetes, use the service DNS.
+# If you're testing locally, you might need to set this to "localhost:9000" 
+# (assuming you have MinIO running locally).
+# You can override this by setting the MINIO_URL environment variable.
+MINIO_URL = os.getenv("MINIO_URL", "minio-service.default.svc.cluster.local:9000")
 
-# Top 5 companies (use stock symbols)
+API_KEY = "NCUQBJ89WQ5AY94N"
 COMPANIES = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
-
-# Alpha Vantage base URL
 BASE_URL = "https://www.alphavantage.co/query"
 
-# MinIO configuration
-MINIO_URL = "minio-service.default.svc.cluster.local:9000"
 MINIO_ACCESS_KEY = "admin"
 MINIO_SECRET_KEY = "password"
 RAW_DATA_BUCKET = "raw-data"
 
-# Initialize MinIO client
+# Initialize the MinIO client
 minio_client = Minio(
     MINIO_URL,
     access_key=MINIO_ACCESS_KEY,
@@ -28,36 +28,36 @@ minio_client = Minio(
     secure=False
 )
 
-# Ensure bucket exists
 if not minio_client.bucket_exists(RAW_DATA_BUCKET):
     minio_client.make_bucket(RAW_DATA_BUCKET)
     print(f"Bucket {RAW_DATA_BUCKET} created.")
 
-def fetch_historical_data(symbol):
-    """Fetch last 5 days of historical data for a given company."""
+def object_exists(bucket, object_name):
+    """Check if an object exists in the specified MinIO bucket."""
     try:
-        # Request parameters for Alpha Vantage API
+        minio_client.stat_object(bucket, object_name)
+        return True
+    except Exception:
+        return False
+
+def fetch_historical_data(symbol):
+    """Fetch the last 5 days of historical data for a given company."""
+    try:
         params = {
             "function": "TIME_SERIES_DAILY",
             "symbol": symbol,
             "apikey": API_KEY,
-            "outputsize": "compact"  # Returns ~100 days of data
+            "outputsize": "compact"
         }
-
-        # API request
         response = requests.get(BASE_URL, params=params)
-        response.raise_for_status()  # Raise exception for bad status codes
-
+        response.raise_for_status()
         data = response.json()
 
-        # Extract the "Time Series" section
         if "Time Series (Daily)" not in data:
             print(f"Error: Could not fetch data for {symbol}. Response: {data}")
             return None
 
         time_series = data["Time Series (Daily)"]
-
-        # Get the last 5 days of data
         today = datetime.today()
         last_5_days = []
         for i in range(5):
@@ -81,15 +81,11 @@ def fetch_historical_data(symbol):
         return None
 
 def upload_to_minio(file_name, data):
-    """Upload data to the MinIO raw-data bucket."""
+    """Upload a DataFrame as a CSV file to the MinIO raw-data bucket."""
     try:
-        # Convert DataFrame to CSV in memory
         csv_data = data.to_csv(index=False).encode("utf-8")
-
-        # Create a byte stream from the CSV data
         csv_stream = io.BytesIO(csv_data)
 
-        # Upload to MinIO
         minio_client.put_object(
             bucket_name=RAW_DATA_BUCKET,
             object_name=file_name,
@@ -102,20 +98,19 @@ def upload_to_minio(file_name, data):
         print(f"Error uploading file {file_name}: {e}")
 
 def fetch_and_store_data():
-    """Fetch data for the top 5 companies and upload to MinIO."""
+    """Fetch data for each company and upload to MinIO if not already present."""
     for company in COMPANIES:
+        file_name = f"{company}_historical_data.csv"
+        if object_exists(RAW_DATA_BUCKET, file_name):
+            print(f"Data for {company} already exists in bucket {RAW_DATA_BUCKET}. Skipping fetch.")
+            continue
+
         print(f"Fetching data for {company}...")
         data = fetch_historical_data(company)
         if data:
-            # Convert list of dicts to DataFrame
             df = pd.DataFrame(data)
-            file_name = f"{company}_historical_data.csv"
-
-            # Upload to MinIO
             upload_to_minio(file_name, df)
-
-        # Wait 15 seconds to avoid hitting the rate limit
-        sleep(15)
+        sleep(15)  # Delay to respect API rate limits
 
 if __name__ == "__main__":
     fetch_and_store_data()

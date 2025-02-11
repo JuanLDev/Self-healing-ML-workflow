@@ -1,0 +1,12 @@
+FROM python:3.8-slim
+
+WORKDIR /app
+
+COPY requirements_ingestion.txt /app/requirements_ingestion.txt
+RUN pip install --no-cache-dir -r requirements_ingestion.txt
+
+COPY data_ingestion.py /app/
+
+EXPOSE 8080
+
+CMD ["python", "data_ingestion.py"]

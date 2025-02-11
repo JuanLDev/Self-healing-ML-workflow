@@ -1,0 +1,10 @@
+FROM python:3.8-slim
+
+WORKDIR /app
+
+COPY requirements_training.txt /app/requirements_training.txt
+RUN pip install --no-cache-dir -r requirements_training.txt
+
+COPY model_training.py /app/
+
+CMD ["python", "model_training.py"]

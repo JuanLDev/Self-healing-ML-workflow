@@ -9,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler
 import shutil  # For compressing directories
 
 # MinIO configuration
-MINIO_URL = "localhost:9000"
+MINIO_URL = os.getenv("MINIO_URL", "minio-service.default.svc.cluster.local:9000")
 MINIO_ACCESS_KEY = "admin"
 MINIO_SECRET_KEY = "password"
 PROCESSED_DATA_BUCKET = "processed-data"
