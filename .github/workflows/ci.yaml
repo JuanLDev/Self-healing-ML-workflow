@@ -1,0 +1,50 @@
+name: Docker Build & Push
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+
+      # (Optional) Python Test Steps If You Have a requirements.txt
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      # Docker Buildx Setup
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Docker Registry Login
+      - name: Log in to Docker
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Build & Push data-fetch
+      - name: Build and push data-fetch
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/data-fetch:latest ./data-fetch
+          docker push ${{ secrets.DOCKER_USERNAME }}/data-fetch:latest
+
+      # Build & Push data-ingestion
+      - name: Build and push data-ingestion
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/data-ingestion:latest ./data-ingestion
+          docker push ${{ secrets.DOCKER_USERNAME }}/data-ingestion:latest
+
+      # Build & Push model-training
+      - name: Build and push model-training
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/model-training:latest ./model-training
+          docker push ${{ secrets.DOCKER_USERNAME }}/model-training:latest

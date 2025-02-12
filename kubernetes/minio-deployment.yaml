@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: minio
+  namespace: default
   labels:
     app: minio
 spec:
@@ -35,16 +36,3 @@ spec:
       volumes:
       - name: minio-storage
         emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: minio-service
-  labels:
-    app: minio
-spec:
-  ports:
-  - port: 9000
-    targetPort: 9000
-  selector:
-    app: minio

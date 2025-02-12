@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: model-training
+  namespace: default
+spec:
+  steps:
+  - name: run-model-training
+    image: juanlugodev/model-training:latest
+    env:
+      - name: MINIO_URL
+        value: "minio-service.default.svc.cluster.local:9000"
+      - name: MINIO_ACCESS_KEY
+        value: "admin"
+      - name: MINIO_SECRET_KEY
+        value: "password"
+    script: |
+      #!/bin/sh
+      echo "Running model training..."
+      python model_training.py
+      echo "Model training completed."

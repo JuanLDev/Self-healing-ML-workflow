@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: data-ingestion
+  namespace: default
+spec:
+  steps:
+  - name: run-data-ingestion
+    image: juanlugodev/data-ingestion:latest
+    env:
+      - name: MINIO_URL
+        value: "minio-service.default.svc.cluster.local:9000"
+      - name: MINIO_ACCESS_KEY
+        value: "admin"
+      - name: MINIO_SECRET_KEY
+        value: "password"
+    script: |
+      #!/bin/sh
+      echo "Running data ingestion..."
+      python data_ingestion.py
+      echo "Data ingestion completed."

@@ -1,0 +1,9 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: ml-pipeline-run
+  namespace: default
+spec:
+  pipelineRef:
+    name: ml-pipeline
+ 

@@ -1,0 +1,23 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: ml-pipeline
+  namespace: default
+spec:
+  tasks:
+  - name: fetch
+    taskRef:
+      name: data-fetch
+    retries: 2
+  - name: ingest
+    runAfter:
+      - fetch
+    taskRef:
+      name: data-ingestion
+    retries: 2
+  - name: train
+    runAfter:
+      - ingest
+    taskRef:
+      name: model-training
+    retries: 2

@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: data-fetch
+  namespace: default
+spec:
+  steps:
+  - name: run-data-fetch
+    image: juanlugodev/data-fetch:latest
+    env:
+      - name: MINIO_URL
+        value: "minio-service.default.svc.cluster.local:9000"
+      - name: MINIO_ACCESS_KEY
+        value: "admin"
+      - name: MINIO_SECRET_KEY
+        value: "password"
+    script: |
+      #!/bin/sh
+      echo "Running data fetch..."
+      python data_fetch.py
+      echo "Data fetch completed."
