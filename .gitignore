@@ -7,3 +7,5 @@ ml_env/
 # Ignore other large files or folders
 *.so
 lib/
+.terraform
+.terraform.lock.hcl

@@ -34,17 +34,21 @@ jobs:
       # Build & Push data-fetch
       - name: Build and push data-fetch
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/data-fetch:latest ./data-fetch
-          docker push ${{ secrets.DOCKER_USERNAME }}/data-fetch:latest
+            docker build -t ${{ secrets.DOCKER_USERNAME }}/data-fetch:latest \
+            -f ./data-fetch/Dockerfile.fetch ./data-fetch
+            docker push ${{ secrets.DOCKER_USERNAME }}/data-fetch:latest
+
 
       # Build & Push data-ingestion
       - name: Build and push data-ingestion
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/data-ingestion:latest ./data-ingestion
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/data-ingestion:latest \
+            -f ./data-ingestion/Dockerfile.ingestion ./data-ingestion
           docker push ${{ secrets.DOCKER_USERNAME }}/data-ingestion:latest
 
       # Build & Push model-training
       - name: Build and push model-training
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/model-training:latest ./model-training
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/model-training:latest \
+            -f ./model-training/Dockerfile.training ./model-training
           docker push ${{ secrets.DOCKER_USERNAME }}/model-training:latest
