@@ -12,22 +12,33 @@ provider "kubernetes" {
 }
 
 ###############################################
-# (NO Tekton CRDs block) -- We assume you run:
-#   kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
-# outside Terraform to install Tekton CRDs.
+# StorageClass, PV, PVC for MinIO
 ###############################################
 
+# 1) StorageClass
+resource "kubernetes_manifest" "minio_storageclass" {
+  manifest = yamldecode(file("${path.module}/../kubernetes/minio-storageclass.yaml"))
+}
+
+
+
+
 ###############################################
-# MinIO, Prometheus, Grafana, etc.
+# MinIO Deployment & Service
 ###############################################
 resource "kubernetes_manifest" "minio_deployment" {
-  manifest = yamldecode(file("${path.module}/../kubernetes/minio-deployment.yaml"))
+
+  manifest   = yamldecode(file("${path.module}/../kubernetes/minio-deployment.yaml"))
 }
 
 resource "kubernetes_manifest" "minio_service" {
-  manifest = yamldecode(file("${path.module}/../kubernetes/minio-service.yaml"))
+  depends_on = [kubernetes_manifest.minio_deployment]
+  manifest   = yamldecode(file("${path.module}/../kubernetes/minio-service.yaml"))
 }
 
+###############################################
+# Prometheus / Grafana Deploy/Service
+###############################################
 resource "kubernetes_manifest" "prometheus_deployment" {
   manifest = yamldecode(file("${path.module}/../monitoring/prometheus-deployment.yaml"))
 }
@@ -43,4 +54,3 @@ resource "kubernetes_manifest" "grafana_deployment" {
 resource "kubernetes_manifest" "grafana_service" {
   manifest = yamldecode(file("${path.module}/../monitoring/grafana-service.yaml"))
 }
-
