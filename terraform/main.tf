@@ -27,8 +27,15 @@ resource "kubernetes_manifest" "minio_storageclass" {
 # MinIO Deployment & Service
 ###############################################
 resource "kubernetes_manifest" "minio_deployment" {
+  manifest = yamldecode(file("${path.module}/../kubernetes/minio-deployment.yaml"))
 
-  manifest   = yamldecode(file("${path.module}/../kubernetes/minio-deployment.yaml"))
+  lifecycle {
+    ignore_changes = [
+      # If your older provider lumps all labels into a single map:
+      "object.metadata[0].labels",
+      "object.spec.template.metadata[0].labels",
+    ]
+  }
 }
 
 resource "kubernetes_manifest" "minio_service" {

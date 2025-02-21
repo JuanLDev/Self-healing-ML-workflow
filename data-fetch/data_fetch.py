@@ -4,14 +4,21 @@ import pandas as pd
 from time import sleep
 from datetime import datetime, timedelta
 from minio import Minio
-import io  
+import io
 
-# If you're running in Kubernetes, use the service DNS.
-# If you're testing locally, you might need to set this to "localhost:9000" 
-# (assuming you have MinIO running locally).
-# You can override this by setting the MINIO_URL environment variable.
+# --- PROMETHEUS IMPORTS ---
+from prometheus_client import Counter, start_http_server
+import time
+
+# METRICS
+files_fetched = Counter('files_fetched_total', 'Number of CSV files successfully fetched')
+fetch_errors = Counter('fetch_errors_total', 'Number of errors encountered when fetching stock data')
+
+# SLEEP DURATION (seconds) so ephemeral pod remains up for scraping
+EPHEMERAL_WAIT = 15
+
+# MINIO / API CONFIG
 MINIO_URL = "minio-service.default.svc.cluster.local:9000"
-
 API_KEY = "6IJ7XFL5KIUSUWCL"
 COMPANIES = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
 BASE_URL = "https://www.alphavantage.co/query"
@@ -20,7 +27,6 @@ MINIO_ACCESS_KEY = "admin"
 MINIO_SECRET_KEY = "password"
 RAW_DATA_BUCKET = "raw-data"
 
-# Initialize the MinIO client
 minio_client = Minio(
     MINIO_URL,
     access_key=MINIO_ACCESS_KEY,
@@ -33,7 +39,6 @@ if not minio_client.bucket_exists(RAW_DATA_BUCKET):
     print(f"Bucket {RAW_DATA_BUCKET} created.")
 
 def object_exists(bucket, object_name):
-    """Check if an object exists in the specified MinIO bucket."""
     try:
         minio_client.stat_object(bucket, object_name)
         return True
@@ -41,7 +46,7 @@ def object_exists(bucket, object_name):
         return False
 
 def fetch_historical_data(symbol):
-    """Fetch the last 5 days of historical data for a given company."""
+    """Fetch last 5 days of historical data for a given company."""
     try:
         params = {
             "function": "TIME_SERIES_DAILY",
@@ -55,22 +60,23 @@ def fetch_historical_data(symbol):
 
         if "Time Series (Daily)" not in data:
             print(f"Error: Could not fetch data for {symbol}. Response: {data}")
+            fetch_errors.inc()  # increment error counter
             return None
 
         time_series = data["Time Series (Daily)"]
         today = datetime.today()
         last_5_days = []
         for i in range(5):
-            date = (today - timedelta(days=i)).strftime("%Y-%m-%d")
-            if date in time_series:
+            date_str = (today - timedelta(days=i)).strftime("%Y-%m-%d")
+            if date_str in time_series:
                 day_data = {
                     "symbol": symbol,
-                    "date": date,
-                    "open": time_series[date]["1. open"],
-                    "high": time_series[date]["2. high"],
-                    "low": time_series[date]["3. low"],
-                    "close": time_series[date]["4. close"],
-                    "volume": time_series[date]["5. volume"]
+                    "date": date_str,
+                    "open": time_series[date_str]["1. open"],
+                    "high": time_series[date_str]["2. high"],
+                    "low": time_series[date_str]["3. low"],
+                    "close": time_series[date_str]["4. close"],
+                    "volume": time_series[date_str]["5. volume"]
                 }
                 last_5_days.append(day_data)
 
@@ -78,6 +84,7 @@ def fetch_historical_data(symbol):
 
     except Exception as e:
         print(f"An error occurred for {symbol}: {e}")
+        fetch_errors.inc()
         return None
 
 def upload_to_minio(file_name, data):
@@ -96,6 +103,7 @@ def upload_to_minio(file_name, data):
         print(f"File {file_name} uploaded to bucket {RAW_DATA_BUCKET}")
     except Exception as e:
         print(f"Error uploading file {file_name}: {e}")
+        fetch_errors.inc()
 
 def fetch_and_store_data():
     """Fetch data for each company and upload to MinIO if not already present."""
@@ -110,7 +118,17 @@ def fetch_and_store_data():
         if data:
             df = pd.DataFrame(data)
             upload_to_minio(file_name, df)
+            files_fetched.inc()  # increment success counter
         sleep(15)  # Delay to respect API rate limits
 
 if __name__ == "__main__":
+    # Start Prometheus metrics server on port 8080
+    start_http_server(8080)
+    print("Prometheus metrics available on :8080/metrics")
+
     fetch_and_store_data()
+
+    # Keep container alive briefly so Prometheus can scrape
+    print(f"Sleeping {EPHEMERAL_WAIT}s before exit to allow scraping...")
+    time.sleep(EPHEMERAL_WAIT)
+    print("Exiting fetch script.")

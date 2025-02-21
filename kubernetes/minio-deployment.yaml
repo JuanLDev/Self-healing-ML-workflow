@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
   name: minio
   namespace: default
-  labels:
-    app: minio
 spec:
   replicas: 1
   selector:
@@ -17,22 +15,19 @@ spec:
     spec:
       containers:
       - name: minio
-        image: minio/minio
+        image: minio/minio:latest
         args:
-        - server
-        - /data
+          - server
+          - /data
+          - --console-address
+          - ":9001"
+        ports:
+          - containerPort: 9000  # S3 API
+          - containerPort: 9001  # Console
         env:
-        - name: MINIO_PROMETHEUS_AUTH_TYPE
-          value: "public"
         - name: MINIO_ROOT_USER
           value: "admin"
         - name: MINIO_ROOT_PASSWORD
           value: "password"
-        ports:
-        - containerPort: 9000
-        volumeMounts:
-        - name: minio-storage
-          mountPath: /data
-      volumes:
-      - name: minio-storage
-        emptyDir: {}
+        - name: MINIO_PROMETHEUS_AUTH_TYPE
+          value: "public"

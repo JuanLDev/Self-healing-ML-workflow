@@ -3,6 +3,10 @@ kind: Task
 metadata:
   name: model-training
   namespace: default
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
 spec:
   steps:
   - name: run-model-training

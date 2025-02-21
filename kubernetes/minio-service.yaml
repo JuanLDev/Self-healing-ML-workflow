@@ -1,13 +1,15 @@
-apiVersion: v1
 kind: Service
+apiVersion: v1
 metadata:
   name: minio-service
-  namespace: default
-  labels:
-    app: minio
 spec:
+  type: LoadBalancer
   ports:
-  - port: 9000
-    targetPort: 9000
+    - name: s3
+      port: 9000
+      targetPort: 9000
+    - name: console
+      port: 9001
+      targetPort: 9001
   selector:
     app: minio

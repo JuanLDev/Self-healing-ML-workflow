@@ -1,21 +1,31 @@
 import os
-from minio import Minio
+import shutil
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-import shutil  # For compressing directories
+from minio import Minio
 
-# MinIO configuration
+# --- PROMETHEUS IMPORTS ---
+from prometheus_client import Counter, start_http_server, Histogram
+import time
+
+EPHEMERAL_WAIT = 15  # Wait so we can be scraped
+
+# METRICS
+training_runs = Counter('training_runs_total', 'How many times the model training has run')
+training_errors = Counter('training_errors_total', 'Number of errors during training')
+training_duration = Histogram('training_duration_seconds',
+                              'Histogram of training function durations')
+
 MINIO_URL = "minio-service.default.svc.cluster.local:9000"
 MINIO_ACCESS_KEY = "admin"
 MINIO_SECRET_KEY = "password"
 PROCESSED_DATA_BUCKET = "processed-data"
 MODELS_BUCKET = "models"
 
-# Initialize MinIO client
 client = Minio(
     MINIO_URL,
     access_key=MINIO_ACCESS_KEY,
@@ -23,7 +33,6 @@ client = Minio(
     secure=False
 )
 
-# Fetch processed data from MinIO
 def fetch_processed_data(file_name):
     try:
         print(f"Fetching processed data: {file_name} from bucket: {PROCESSED_DATA_BUCKET}")
@@ -33,22 +42,19 @@ def fetch_processed_data(file_name):
         return data
     except Exception as e:
         print(f"Error fetching processed data: {e}")
+        training_errors.inc()
         return None
 
-# Save trained model to MinIO
 def save_model_to_minio(model, model_name):
     try:
-        # Save the model to a temporary directory
         temp_model_dir = f"/tmp/{model_name}"
         model.save(temp_model_dir)
         print(f"Model saved locally to {temp_model_dir}")
 
-        # Compress the model directory into a .zip file
         zip_file_path = f"/tmp/{model_name}.zip"
         shutil.make_archive(temp_model_dir, 'zip', temp_model_dir)
         print(f"Model directory compressed to {zip_file_path}")
 
-        # Upload the .zip file to MinIO
         with open(zip_file_path, "rb") as zip_file:
             client.put_object(
                 bucket_name=MODELS_BUCKET,
@@ -61,8 +67,8 @@ def save_model_to_minio(model, model_name):
 
     except Exception as e:
         print(f"Error saving model to MinIO: {e}")
+        training_errors.inc()
 
-# Build a stock price prediction model
 def build_model(input_shape):
     model = Sequential([
         LSTM(50, return_sequences=True, input_shape=input_shape),
@@ -76,25 +82,22 @@ def build_model(input_shape):
     print("Model architecture built successfully.")
     return model
 
-# Train the model
+@training_duration.time()  # measure how long the train_model function takes
 def train_model(data):
     try:
-        # Feature selection and scaling
         features = data.drop(['date', 'symbol', 'close'], axis=1)
         target = data['close']
-        
+
         scaler = MinMaxScaler(feature_range=(0, 1))
         features_scaled = scaler.fit_transform(features)
         target_scaled = scaler.fit_transform(target.values.reshape(-1, 1))
 
-        # Train-test split
-        X_train, X_test, y_train, y_test = train_test_split(features_scaled, target_scaled, test_size=0.2, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(features_scaled, target_scaled,
+                                                            test_size=0.2, random_state=42)
 
-        # Reshape for LSTM input
         X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
         X_test = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
 
-        # Build and train the model
         model = build_model((X_train.shape[1], 1))
         model.fit(X_train, y_train, batch_size=32, epochs=10, validation_data=(X_test, y_test))
 
@@ -103,18 +106,25 @@ def train_model(data):
 
     except Exception as e:
         print(f"Error during model training: {e}")
+        training_errors.inc()
         return None
 
 if __name__ == "__main__":
-    # Fetch processed data
-    file_name = "AAPL_historical_data_processed.json"  # Replace with the desired file name
+    # Start HTTP server for metrics
+    start_http_server(8080)
+    print("Prometheus metrics available at :8080/metrics")
+
+    file_name = "AAPL_historical_data_processed.json" 
     processed_data = fetch_processed_data(file_name)
 
     if processed_data is not None:
-        # Train the model
         print("Starting model training...")
+        training_runs.inc()  # increment training run
         trained_model = train_model(processed_data)
 
         if trained_model is not None:
-            # Save the trained model to MinIO
             save_model_to_minio(trained_model, "stock_price_prediction_model")
+
+    print(f"Sleeping {EPHEMERAL_WAIT}s to allow scraping, then exiting.")
+    time.sleep(EPHEMERAL_WAIT)
+    print("Exiting training script.")

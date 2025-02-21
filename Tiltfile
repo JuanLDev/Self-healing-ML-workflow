@@ -1,5 +1,8 @@
 # Tiltfile
 
+###########################################################
+# 1) Docker builds for each script
+###########################################################
 docker_build(
     "juanlugodev/data-fetch",
     "./data-fetch",
@@ -30,5 +33,20 @@ docker_build(
     ],
 )
 
-k8s_yaml("ml-pipeline/tekton-ml-pipeline.yaml")
-# Possibly any other YAML you have
+###########################################################
+# 2) Apply all Tekton + MinIO YAML via k8s_yaml
+###########################################################
+k8s_yaml([
+    # MinIO (assuming you have these YAMLs in `kubernetes/`)
+    "kubernetes/minio-deployment.yaml",
+    "kubernetes/minio-service.yaml",
+
+    # Tekton tasks
+    "ml-pipeline/tekton_task_datafetch.yaml",
+    "ml-pipeline/tekton_task_dataingestion.yaml",
+    "ml-pipeline/tekton_task_modeltraining.yaml",
+
+    # Tekton pipeline & pipelineRun
+    "ml-pipeline/tekton_pipeline.yaml",
+    "ml-pipeline/tekton_pipelinerun.yaml",
+])

@@ -2,39 +2,53 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: node-exporter
-  namespace: kube-system  # or default, your choice
+  namespace: monitoring
   labels:
-    k8s-app: node-exporter
+    app: node-exporter
 spec:
   selector:
     matchLabels:
-      k8s-app: node-exporter
+      app: node-exporter
   template:
     metadata:
       labels:
-        k8s-app: node-exporter
+        app: node-exporter
     spec:
-      # Tolerate scheduling on master, if you want to scrape the master node as well
+      # Typically, Node Exporter runs in privileged mode to read host data
+      hostPID: true
+      hostNetwork: true
       tolerations:
-      - key: node-role.kubernetes.io/master
-        effect: NoSchedule
+        - key: "node-role.kubernetes.io/control-plane"
+          effect: "NoSchedule"
       containers:
       - name: node-exporter
         image: quay.io/prometheus/node-exporter:v1.5.0
         args:
-          - '--path.rootfs=/host'
+          - --path.procfs=/host/proc
+          - --path.sysfs=/host/sys
+          - --web.listen-address=:9100
         ports:
           - containerPort: 9100
             hostPort: 9100
-            name: metrics
+        securityContext:
+          privileged: true
         volumeMounts:
-          - name: rootfs
-            mountPath: /host
+          - name: proc
+            mountPath: /host/proc
             readOnly: true
-      hostNetwork: true
-      hostPID: true
+          - name: sys
+            mountPath: /host/sys
+            readOnly: true
+          - name: dockersock
+            mountPath: /var/run/docker.sock
+            readOnly: true
       volumes:
-      - name: rootfs
-        hostPath:
-          path: /
-          type: Directory
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: dockersock
+          hostPath:
+            path: /var/run/docker.sock
