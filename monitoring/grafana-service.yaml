@@ -3,12 +3,13 @@ kind: Service
 metadata:
   name: grafana-service
   namespace: monitoring
-spec:
-  selector:
+  labels:
     app: grafana
+spec:
+  type: ClusterIP
   ports:
-    - protocol: TCP
+    - name: http
       port: 3000
       targetPort: 3000
-      nodePort: 32000
-  type: NodePort
+  selector:
+    app: grafana
