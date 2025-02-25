@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: promtail
+  namespace: logging
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+  namespace: logging
+data:
+  promtail.yaml: |
+    server:
+      http_listen_port: 3101
+      grpc_listen_port: 0
+
+    positions:
+      filename: /var/lib/promtail/positions.yaml
+
+    clients:
+      - url: http://loki.logging.svc.cluster.local:3100/loki/api/v1/push
+
+    scrape_configs:
+      - job_name: "docker-logs"
+        pipeline_stages:
+          - docker: {}
+
+        static_configs:
+          - targets:
+              - localhost
+            labels:
+              job: "docker-containers"
+              __path__: /var/lib/docker/containers/*-json.log
+
+        relabel_configs:
+          - source_labels: [__path__]
+            regex: "/var/lib/docker/containers/(.*)-json.log"
+            target_label: container_id
+
+
+---
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: promtail
+  namespace: logging
+  labels:
+    app: promtail
+spec:
+  selector:
+    matchLabels:
+      app: promtail
+  template:
+    metadata:
+      labels:
+        app: promtail
+    spec:
+      serviceAccountName: promtail
+      volumes:
+        - name: config
+          configMap:
+            name: promtail-config
+        - name: positions
+          hostPath:
+            path: /var/lib/promtail
+            type: DirectoryOrCreate
+        - name: varlog
+          hostPath:
+            path: /var/log
+            type: Directory
+        - name: containers
+          hostPath:
+            path: /var/log/containers
+            type: Directory
+        - name: pods
+          hostPath:
+            path: /var/log/pods
+            type: Directory
+      containers:
+        - name: promtail
+          image: grafana/promtail:2.6.1
+          args:
+            - "-config.file=/etc/promtail/promtail.yaml"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/promtail
+              readOnly: true
+            - name: positions
+              mountPath: /var/lib/promtail
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: containers
+              mountPath: /var/log/containers
+              readOnly: true
+            - name: pods
+              mountPath: /var/log/pods
+              readOnly: true
