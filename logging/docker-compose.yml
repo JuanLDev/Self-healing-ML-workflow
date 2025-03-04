@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  loki:
+    image: grafana/loki:2.8.2
+    container_name: logging-loki
+    user: "0"
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+      - /etc/localtime:/etc/localtime:ro
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+      - -target=distributor,ingester,querier,query-frontend
+
+
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: logging-promtail
+    volumes:
+      - ./promtail-config.yaml:/etc/promtail/promtail.yaml
+      - ./promtail-position:/var/lib/promtail
+      - /var/log:/var/log
+      - /etc/localtime:/etc/localtime:ro
+    command: -config.file=/etc/promtail/promtail.yaml
+    restart: always
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: logging-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - /etc/localtime:/etc/localtime:ro 
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_DISABLE_LOGIN_FORM=false
+    restart: always
+    depends_on:
+      - loki
+
+volumes:
+  loki-data:
+  grafana-data:

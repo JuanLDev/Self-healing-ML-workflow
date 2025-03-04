@@ -17,3 +17,7 @@ spec:
             name: loki
             port:
               number: 3100
+  tls:
+  - hosts:
+      - loki.local
+    secretName: loki-tls

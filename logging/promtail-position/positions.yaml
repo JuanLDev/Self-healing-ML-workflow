@@ -1,0 +1,9 @@
+positions:
+  /var/log/alf.log: "102"
+  /var/log/displaypolicyd.stdout.log: "0"
+  /var/log/fsck_apfs.log: "15194"
+  /var/log/fsck_apfs_error.log: "0"
+  /var/log/fsck_hfs.log: "14303"
+  /var/log/install.log: "20056915"
+  /var/log/shutdown_monitor.log: "3044"
+  /var/log/wifi.log: "1009123"

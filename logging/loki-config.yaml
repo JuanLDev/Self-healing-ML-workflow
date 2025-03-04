@@ -1,0 +1,39 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+common:
+  path_prefix: /tmp/loki
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+ingester:
+  wal:
+    enabled: false
+  lifecycler:
+    join_after: 0s
+    ring:
+      kvstore:
+        store: inmemory
+
+schema_config:
+  configs:
+    - from: 1970-01-01
+      store: inmemory        
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: ephemeral_index_
+        period: 24h
+
+distributor:
+  ring:
+    kvstore:
+      store: inmemory
+
+querier:
+  engine:
+    max_look_back_period: 0s
