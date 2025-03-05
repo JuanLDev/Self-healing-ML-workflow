@@ -4,3 +4,4 @@ boto3
 minio
 requests
 prometheus_client
+yfinance
