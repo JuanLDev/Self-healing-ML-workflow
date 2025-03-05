@@ -18,7 +18,7 @@ training_runs = Counter('training_runs_total', 'How many times the model trainin
 training_errors = Counter('training_errors_total', 'Number of errors during training')
 training_duration = Histogram('training_duration_seconds', 'Histogram of training function durations')
 
-MINIO_URL = "127.0.0.1:9000" 
+MINIO_URL = "http://minio-service.default.svc.cluster.local:9000"
 MINIO_ACCESS_KEY = "admin"
 MINIO_SECRET_KEY = "password"
 PROCESSED_DATA_BUCKET = "processed-data"

@@ -12,7 +12,7 @@ EPHEMERAL_WAIT = 15
 ingestion_files_processed = Counter('ingestion_files_processed_total', 'Number of raw CSV files processed')
 ingestion_rows_processed = Counter('ingestion_rows_processed_total', 'Number of rows processed during ingestion')
 
-MINIO_URL = "127.0.0.1:9000" 
+MINIO_URL = "http://minio-service.default.svc.cluster.local:9000"
 MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "admin")
 MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "password")
 RAW_DATA_BUCKET = "raw-data"

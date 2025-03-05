@@ -15,7 +15,7 @@ fetch_errors = Counter('fetch_errors_total', 'Number of errors encountered when 
 
 EPHEMERAL_WAIT = 15
 
-MINIO_URL = "127.0.0.1:9000"
+MINIO_URL = "http://minio-service.default.svc.cluster.local:9000"
 MINIO_ACCESS_KEY = "admin"
 MINIO_SECRET_KEY = "password"
 RAW_DATA_BUCKET = "raw-data"
@@ -31,6 +31,22 @@ minio_client = Minio(
     secret_key=MINIO_SECRET_KEY,
     secure=False
 )
+def wait_for_minio():
+    for _ in range(30):  # Retry for 30 seconds
+        try:
+            response = requests.get(f"{MINIO_URL}/minio/health/live")
+            if response.status_code == 200:
+                print("✅ MinIO is available!")
+                return True
+        except requests.exceptions.RequestException:
+            pass
+        print("⏳ Waiting for MinIO...")
+        time.sleep(2)
+    print("❌ MinIO is unavailable!")
+    return False
+
+if not wait_for_minio():
+    exit(1)
 
 if not minio_client.bucket_exists(RAW_DATA_BUCKET):
     minio_client.make_bucket(RAW_DATA_BUCKET)
