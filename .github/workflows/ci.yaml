@@ -66,10 +66,11 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image: "***/fastapi-model:latest"
-          severity: HIGH,CRITICAL  
-          ignore-unfixed: true   
-          exit-code: 0           
+          scan-type: 'image'  
+          image-ref: "***/fastapi-model:latest"  
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1  
           format: table
 
       - name: Run Snyk Scan
