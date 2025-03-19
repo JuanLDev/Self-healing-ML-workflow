@@ -67,7 +67,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'image'  
-          image-ref: "***/fastapi-model:latest"  
+          image-ref: 'docker.io/juanlugodev/fastapi-model:latest'  
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: 1  
