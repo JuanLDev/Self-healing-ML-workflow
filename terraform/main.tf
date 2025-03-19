@@ -12,6 +12,15 @@ provider "kubernetes" {
 }
 
 ###############################################
+# Namespace for Tekton Pipelines
+###############################################
+resource "kubernetes_namespace" "tekton" {
+  metadata {
+    name = "tekton-pipelines"
+  }
+}
+
+###############################################
 # StorageClass, PV, PVC for MinIO
 ###############################################
 resource "kubernetes_manifest" "minio_storageclass" {
@@ -19,17 +28,34 @@ resource "kubernetes_manifest" "minio_storageclass" {
 }
 
 ###############################################
-# MinIO Deployment & Service
+# MinIO Deployment
 ###############################################
 resource "kubernetes_manifest" "minio_deployment" {
-  manifest = yamldecode(file("${path.module}/../kubernetes/minio-deployment.yaml"))
+  manifest = merge(
+    yamldecode(file("${path.module}/../kubernetes/minio-deployment.yaml")),
+    {
+      metadata = {
+        name      = "minio"
+        namespace = "default"
+      }
+    }
+  )
+}
 
-  lifecycle {
-    ignore_changes = [
-      object.metadata[0].labels,
-      object.spec.template.metadata[0].labels,
-    ]
-  }
+###############################################
+# MinIO Service (Fixing Duplicate Issue)
+###############################################
+resource "kubernetes_manifest" "minio_service" {
+  depends_on = [kubernetes_manifest.minio_deployment]
+  manifest   = merge(
+    yamldecode(file("${path.module}/../kubernetes/minio-service.yaml")),
+    {
+      metadata = {
+        name      = "minio-service"
+        namespace = "default"
+      }
+    }
+  )
 }
 
 ###############################################
@@ -97,14 +123,6 @@ resource "null_resource" "apply_tekton_task_modeltraining" {
   provisioner "local-exec" {
     command = "kubectl apply -f ${path.module}/../ml-pipeline/tekton_task_modeltraining.yaml"
   }
-}
-
-###############################################
-# MinIO Service
-###############################################
-resource "kubernetes_manifest" "minio_service" {
-  depends_on = [kubernetes_manifest.minio_deployment]
-  manifest   = yamldecode(file("${path.module}/../kubernetes/minio-service.yaml"))
 }
 
 ###############################################

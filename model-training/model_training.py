@@ -18,11 +18,11 @@ training_runs = Counter('training_runs_total', 'How many times the model trainin
 training_errors = Counter('training_errors_total', 'Number of errors during training')
 training_duration = Histogram('training_duration_seconds', 'Histogram of training function durations')
 
-MINIO_URL = "http://minio-service.default.svc.cluster.local:9000"
-MINIO_ACCESS_KEY = "admin"
-MINIO_SECRET_KEY = "password"
-PROCESSED_DATA_BUCKET = "processed-data"
-MODELS_BUCKET = "models"
+MINIO_URL = os.getenv("MINIO_URL", "minio-service.default.svc.cluster.local:9000")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "admin")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "password")
+PROCESSED_DATA_BUCKET = os.getenv("PROCESSED_DATA_BUCKET","processed-data")
+MODELS_BUCKET = os.getenv("MODELS_BUCKET","models")
 
 client = Minio(
     MINIO_URL.replace("http://", ""),  
@@ -102,12 +102,10 @@ def train_model(data):
 
         data['symbol'] = data['symbol'].astype(str)
 
-        # Ensure numeric conversion
         numeric_cols = ['open', 'high', 'low', 'close', 'volume']
         for col in numeric_cols:
             data[col] = pd.to_numeric(data[col], errors='coerce')  
 
-        # Drop any row with NaN after conversion
         data = data.dropna()
 
         print(f"✅ Data After Cleaning, Shape: {data.shape}")

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: model-api-config
+data:
+  MINIO_URL: "minio-service.default.svc.cluster.local:9000"
+  MINIO_ACCESS_KEY: "admin"
+  MINIO_SECRET_KEY: "password"
+  MODEL_BUCKET: "models"
+  

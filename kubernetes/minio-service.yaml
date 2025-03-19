@@ -4,7 +4,7 @@ metadata:
   name: minio-service
   namespace: default
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - name: s3
       port: 9000

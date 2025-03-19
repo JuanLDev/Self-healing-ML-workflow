@@ -7,6 +7,7 @@ from minio import Minio
 import io
 from prometheus_client import Counter, start_http_server
 import time
+import requests
 
 
 files_fetched = Counter('files_fetched_total', 'Number of CSV files successfully fetched')
@@ -15,38 +16,45 @@ fetch_errors = Counter('fetch_errors_total', 'Number of errors encountered when 
 
 EPHEMERAL_WAIT = 15
 
-MINIO_URL = "http://minio-service.default.svc.cluster.local:9000"
-MINIO_ACCESS_KEY = "admin"
-MINIO_SECRET_KEY = "password"
-RAW_DATA_BUCKET = "raw-data"
+MINIO_URL = os.getenv("MINIO_URL", "minio-service.default.svc.cluster.local:9000")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "admin")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "password")
+RAW_DATA_BUCKET = os.getenv("RAW_DATA_BUCKET", "raw-data")
 
 
 STOCKS = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
 FOREX_PAIRS = ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X"] 
 
-
+print(f"DEBUG - MINIO_URL: '{MINIO_URL}'")
 minio_client = Minio(
     MINIO_URL,
     access_key=MINIO_ACCESS_KEY,
     secret_key=MINIO_SECRET_KEY,
-    secure=False
+    secure=False  
 )
-def wait_for_minio():
-    for _ in range(30):  # Retry for 30 seconds
-        try:
-            response = requests.get(f"{MINIO_URL}/minio/health/live")
-            if response.status_code == 200:
-                print("✅ MinIO is available!")
-                return True
-        except requests.exceptions.RequestException:
-            pass
-        print("⏳ Waiting for MinIO...")
-        time.sleep(2)
-    print("❌ MinIO is unavailable!")
-    return False
+def ensure_bucket(bucket_name):
+    if not client.bucket_exists(bucket_name):
+        client.make_bucket(bucket_name)
+        print(f"Bucket '{bucket_name}' created.")
+    else:
+        print(f"Bucket '{bucket_name}' already exists.")
 
-if not wait_for_minio():
-    exit(1)
+# def wait_for_minio():
+#     for _ in range(30):  # Retry for 30 seconds
+#         try:
+#             response = requests.get(f"{MINIO_URL}/minio/health/live")
+#             if response.status_code == 200:
+#                 print("✅ MinIO is available!")
+#                 return True
+#         except requests.exceptions.RequestException:
+#             pass
+#         print("⏳ Waiting for MinIO...")
+#         time.sleep(2)
+#     print("❌ MinIO is unavailable!")
+#     return False
+
+# if not wait_for_minio():
+#     exit(1)
 
 if not minio_client.bucket_exists(RAW_DATA_BUCKET):
     minio_client.make_bucket(RAW_DATA_BUCKET)
