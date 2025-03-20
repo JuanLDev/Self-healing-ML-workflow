@@ -11,6 +11,7 @@ from config import MINIO_URL, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, MODEL_BUCKET, 
 
 app = FastAPI(title="Stock & Forex Price Prediction API", version="1.0")
 
+# MinIO Client
 minio_client = Minio(
     MINIO_URL,
     access_key=MINIO_ACCESS_KEY,
@@ -18,15 +19,21 @@ minio_client = Minio(
     secure=False
 )
 
+# Model Storage Path
+MODEL_PATH = "/tmp/model"
+MODEL_FILE_PATH = os.path.join(MODEL_PATH, "model.keras")
+
 class PredictionRequest(BaseModel):
     open: float
     high: float
     low: float
     volume: float
 
-def load_model():
-    """Downloads the model from MinIO and loads it if available."""
+def download_and_load_model():
+    """Downloads the model from MinIO and loads it into TensorFlow."""
     try:
+        os.makedirs(MODEL_PATH, exist_ok=True)
+
         try:
             minio_client.stat_object(MODEL_BUCKET, MODEL_FILE)
         except minio.error.S3Error as e:
@@ -37,17 +44,17 @@ def load_model():
 
         response = minio_client.get_object(MODEL_BUCKET, MODEL_FILE)
         with zipfile.ZipFile(io.BytesIO(response.read()), "r") as zip_ref:
-            zip_ref.extractall("/tmp/model")
+            zip_ref.extractall(MODEL_PATH)
 
-        return tf.keras.models.load_model("/tmp/model/model.keras")
+        print("✅ Model downloaded and extracted successfully!")
+        return tf.keras.models.load_model(MODEL_FILE_PATH)
 
     except Exception as e:
         print(f"🚨 Error loading model: {str(e)}")
         return None
 
-model = load_model()
 
-model = load_model()
+model = download_and_load_model()
 
 @app.get("/")
 def root():
@@ -69,8 +76,9 @@ def predict(data: PredictionRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {e}")
 
-@app.get("/health")
+@app.get("/healthz")
 def health():
+    """Health check endpoint for Kubernetes probes."""
     return {
         "status": "healthy",
         "model_loaded": model is not None,
