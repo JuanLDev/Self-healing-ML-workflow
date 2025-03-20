@@ -81,7 +81,7 @@ jobs:
         uses: snyk/actions/docker@master
         with:
           image: docker.io/juanlugodev/fastapi-model:latest
-          args: --severity-threshold=high --file=Dockerfile
+          args: --severity-threshold=high --file=./model_api/Dockerfile
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
