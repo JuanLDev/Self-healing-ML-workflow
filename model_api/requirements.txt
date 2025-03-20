@@ -1,7 +1,8 @@
 fastapi
 uvicorn
-tensorflow
 pandas
 numpy
 minio
 python-dotenv
+setuptools==70.0.0
+tensorflow==2.19.0
