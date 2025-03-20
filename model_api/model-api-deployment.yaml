@@ -28,6 +28,7 @@ spec:
             port: 8000
           initialDelaySeconds: 5
           periodSeconds: 10
+          timeoutSeconds: 3
           failureThreshold: 3
         readinessProbe:
           httpGet:
@@ -35,6 +36,7 @@ spec:
             port: 8000
           initialDelaySeconds: 3
           periodSeconds: 5
+          timeoutSeconds: 2
           failureThreshold: 2
         startupProbe:
           httpGet:
@@ -42,6 +44,7 @@ spec:
             port: 8000
           initialDelaySeconds: 10
           periodSeconds: 5
+          timeoutSeconds: 3
           failureThreshold: 5
 ---
 apiVersion: v1
