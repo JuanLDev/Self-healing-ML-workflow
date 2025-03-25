@@ -1,9 +1,11 @@
-FROM python:3.11-slim-bookworm
+FROM python:3.10-slim-bookworm
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y build-essential \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get upgrade -y zlib1g && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir tensorflow==2.16.1 keras==3.0.5
 
 COPY requirements.txt .
 COPY main.py .
