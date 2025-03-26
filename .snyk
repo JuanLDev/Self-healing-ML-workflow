@@ -1,12 +1,9 @@
 version: v1.25.0
 ignore:
   SNYK-DEBIAN12-ZLIB-6008963:
-    - '* > zlib/zlib1g'
-    - '* > util-linux > zlib/zlib1g'
-    - '* > apt > libapt-pkg6.0 > zlib/zlib1g'
-    - '* > readline > zlib/zlib1g'
-    reason: 'Debian Bookworm zlib1g is patched (1:1.2.13.dfsg-1+deb12u1)'
-    expires: 2024-12-31T00:00:00.000Z
+    - '*':
+        reason: 'Debian Bookworm zlib1g is patched (1:1.2.13.dfsg-1+deb12u1)'
+        expires: 2024-12-31T00:00:00.000Z
 
   SNYK-PYTHON-KERAS-9396793:
     - '* > tensorflow-cpu > keras'
