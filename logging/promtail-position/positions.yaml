@@ -6,5 +6,5 @@ positions:
   /var/log/fsck_hfs.log: "17663"
   /var/log/install.log: "21592323"
   /var/log/shutdown_monitor.log: "5410"
-  /var/log/system.log: "2158"
-  /var/log/wifi.log: "839736"
+  /var/log/system.log: "2221"
+  /var/log/wifi.log: "848916"
