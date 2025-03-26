@@ -95,17 +95,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup kubectl for Minikube
+      - name: Setup Minikube kubectl
         run: |
           mkdir -p ~/.kube
-          # Write the full kubeconfig content (ensure secret contains valid YAML)
-          cat <<EOF > ~/.kube/config
-          ${{ secrets.KUBECONFIG }}
-          EOF
-          chmod 600 ~/.kube/config
-          kubectl config use-context minikube --kubeconfig=~/.kube/config
+          minikube update-context
+          cp ~/.minikube/profiles/cluster/config.json ~/.kube/config
+          kubectl config get-contexts
+          kubectl config use-context minikube  # or try 'cluster' if this fails
           kubectl cluster-info
-          kubectl get nodes
 
       - name: Apply Kubernetes Manifests
         run: |
