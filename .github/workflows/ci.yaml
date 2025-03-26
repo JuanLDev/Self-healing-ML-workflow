@@ -82,6 +82,7 @@ jobs:
         with:
           image: docker.io/juanlugodev/fastapi-model:latest
           args: >
+            --docker
             --severity-threshold=high
             --exit-code=0
         env:
