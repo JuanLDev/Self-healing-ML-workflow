@@ -95,16 +95,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup kubeconfig
+      - name: Set up kubeconfig
         run: |
           mkdir -p ~/.kube
-          # Use proper YAML formatting
-          cat << 'EOF' > ~/.kube/config
-          ${{ secrets.KUBECONFIG }}
-          EOF
+          echo "${{ secrets.KUBECONFIG_DATA }}" > ~/.kube/config
           chmod 600 ~/.kube/config
-          
-          # Verify config
+
           kubectl config view
           kubectl config get-contexts
           kubectl cluster-info
