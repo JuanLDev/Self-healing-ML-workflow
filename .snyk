@@ -1,0 +1,7 @@
+version: v1.25.0
+ignore:
+  SNYK-DEBIAN12-ZLIB-6008963:
+    - '* > zlib/zlib1g'
+  SNYK-PYTHON-KERAS-9396793:
+    - '* > tensorflow-cpu > keras'
+    
