@@ -95,14 +95,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup Minikube kubectl
+      - name: Setup External kubeconfig
         run: |
           mkdir -p ~/.kube
-          minikube update-context
-          cp ~/.minikube/profiles/cluster/config.json ~/.kube/config
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+          
+          # List all available contexts
           kubectl config get-contexts
-          kubectl config use-context minikube  # or try 'cluster' if this fails
-          kubectl cluster-info
+          
+          # Use the exact context name shown in the output
+          kubectl config use-context your-exact-context-name-here
 
       - name: Apply Kubernetes Manifests
         run: |
