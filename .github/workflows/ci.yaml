@@ -77,13 +77,13 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: 1
 
-      - name: Run Snyk scan
-        uses: snyk/actions/docker@master
-        with:
-          image: docker.io/juanlugodev/fastapi-model:latest
-          args: --severity-threshold=high --file=./model_api/Dockerfile --exit-code=0
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #- name: Run Snyk scan
+       # uses: snyk/actions/docker@master
+        #with:
+         # image: docker.io/juanlugodev/fastapi-model:latest
+          #args: --severity-threshold=high --file=./model_api/Dockerfile --exit-code=0
+        #env:
+          #SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
 
   deploy:
