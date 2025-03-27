@@ -97,7 +97,7 @@ jobs:
         mkdir -p ~/.kube
         echo '${{ secrets.KUBE_CONFIG }}' | base64 -d > ~/.kube/config
         kubectl config set-credentials github --token=${{ secrets.KUBE_TOKEN }}
-        kubectl config use-context your-context-name
+        kubectl config use-context minikube
 
     - name: Verify access
       run: |
