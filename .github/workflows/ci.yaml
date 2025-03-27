@@ -85,46 +85,34 @@ jobs:
       #   env:
       #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
+  deploy:
+    runs-on: self-hosted
+    needs: security-scan
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-  # deploy:
-  #   name: Deploy to Kubernetes
-  #   runs-on: ubuntu-latest
-  #   needs: security-scan
+    - name: Configure Kubernetes
+      run: |
+        mkdir -p ~/.kube
+        echo '${{ secrets.KUBE_CONFIG }}' | base64 -d > ~/.kube/config
+        kubectl config set-credentials github --token=${{ secrets.KUBE_TOKEN }}
+        kubectl config use-context your-context-name
 
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@v3
+    - name: Verify access
+      run: |
+        kubectl cluster-info
+        kubectl get pods -A
 
-  #     - name: Set up kubeconfig
-  #       run: |
-  #         mkdir -p ~/.kube
-  #         echo "${{ secrets.KUBECONFIG_DATA }}" > ~/.kube/config
-  #         chmod 600 ~/.kube/config
-
-  #         kubectl config view
-  #         kubectl config get-contexts
-  #         kubectl cluster-info
-
-  #     - name: Apply Kubernetes Manifests
-  #       run: |
-  #         kubectl apply -f kubernetes/minio-deployment.yaml
-  #         kubectl apply -f kubernetes/minio-service.yaml
-  #         kubectl apply -f kubernetes/model-api-deployment.yaml
-  #         kubectl apply -f kubernetes/model-api-service.yaml
-  #         kubectl rollout status deployment/model-api -n default
-
-  #     - name: Apply Tekton Pipelines
-  #       run: |
-  #         kubectl apply -f ml-pipeline/tekton_pipeline.yaml
-  #         kubectl apply -f ml-pipeline/tekton_task_datafetch.yaml
-  #         kubectl apply -f ml-pipeline/tekton_task_dataingestion.yaml
-  #         kubectl apply -f ml-pipeline/tekton_task_modeltraining.yaml
-  #         kubectl apply -f ml-pipeline/tekton_pipelinerun.yaml
+    - name: Deploy to cluster
+      run: |
+        kubectl apply -f k8s/
+  
 
   model-versioning:
     name: Data & Model Versioning (DVC)
     runs-on: ubuntu-latest
-    needs: security-scan
+    needs: deploy
 
     steps:
       - name: Checkout Repository
@@ -141,45 +129,47 @@ jobs:
 
       - name: Download model from MinIO
         env:
-          AWS_ACCESS_KEY_ID: "admin"  
-          AWS_SECRET_ACCESS_KEY: "password"     
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}  # From your MinIO deployment
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
         run: |
+          # 1. Create directory structure
           mkdir -p downloaded_models
           
-          # 1. Verify MinIO pod status
-          echo "Checking MinIO pod..."
-          kubectl get pods -l app=minio -n default
+          # 2. Verify MinIO pod status
+          echo "=== Checking MinIO pod ==="
+          kubectl get pods -l app=minio -n default -o wide
           MINIO_POD=$(kubectl get pod -l app=minio -n default -o jsonpath='{.items[0].metadata.name}')
-          kubectl logs $MINIO_POD -n default --tail=5
           
-          # 2. Create temporary port-forward
-          echo "Establishing port-forward..."
+          # 3. Establish port-forward with health check
+          echo "=== Starting port-forward ==="
           kubectl port-forward svc/minio-service 9000:9000 -n default --address 0.0.0.0 > /dev/null 2>&1 &
           sleep 10  # Wait for port-forward stabilization
           
-          # 3. Verify MinIO connectivity
-          echo "Testing MinIO connection..."
-          curl -sSf http://localhost:9000/minio/health/live || {
-            echo "::error::MinIO health check failed"
-            exit 1
-          }
+          # Health check with retries
+          for i in {1..3}; do
+            if curl -sSf http://localhost:9000/minio/health/live; then
+              echo "MinIO is responsive"
+              break
+            else
+              echo "Attempt $i/3: MinIO not ready"
+              sleep 5
+            fi
+          done
           
-          # 4. Download with AWS CLI (using localhost via port-forward)
-          echo "Downloading model..."
-          aws --endpoint-url "http://localhost:9000" s3 cp \
+          # 4. Download with AWS CLI (using port-forward)
+          echo "=== Downloading model ==="
+          aws --endpoint-url http://localhost:9000 s3 cp \
             s3://models/stock_forex_price_prediction_model.zip \
-            downloaded_models/stock_forex_price_prediction_model.zip || {
-            echo "::error::Download failed"
-            exit 1
-          }
+            downloaded_models/model.zip \
+            || (echo "::error::Download failed" && exit 1)
           
-          # 5. Verify download
-          if [ -s "downloaded_models/stock_forex_price_prediction_model.zip" ]; then
-            echo "Download successful! Size: $(du -h downloaded_models/stock_forex_price_prediction_model.zip | cut -f1)"
-          else
-            echo "::error::Downloaded file is empty"
-            exit 1
-          fi
+          # 5. Validate download
+          echo "=== Verifying download ==="
+          unzip -t downloaded_models/model.zip || (echo "::error::Corrupted download" && exit 1)
+          echo "Downloaded size: $(du -h downloaded_models/model.zip | cut -f1)"
+          
+          # 6. Clean up port-forward
+          pkill -f "port-forward" || true
         
 
       - name: Track model with DVC
