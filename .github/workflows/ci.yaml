@@ -146,7 +146,7 @@ jobs:
         run: |
           mkdir -p downloaded_models
       
-          aws --endpoint-url "${{ secrets.MINIO_ENDPOINT }}" s3 cp \
+          aws --endpoint-url "http://minio-service.default.svc.cluster.local:9000" s3 cp \
             s3://models/stock_forex_price_prediction_model.zip \
             downloaded_models/stock_forex_price_prediction_model.zip
         
