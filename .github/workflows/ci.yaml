@@ -89,24 +89,29 @@ jobs:
     runs-on: self-hosted
     needs: security-scan
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Configure Kubernetes
-      run: |
-        mkdir -p ~/.kube
-        echo '${{ secrets.KUBE_CONFIG }}' | base64 -d > ~/.kube/config
-        kubectl config set-credentials github --token=${{ secrets.KUBE_TOKEN }}
-        kubectl config use-context minikube
+      - name: Configure Kubernetes
+        run: |
+          mkdir -p ~/.kube
+          # Use raw kubeconfig with embedded certs
+          echo '${{ secrets.KUBE_CONFIG }}' | base64 -d > ~/.kube/config
+          # Auto-detect context (more reliable than hardcoded "minikube")
+          CONTEXT=$(kubectl config view -o jsonpath='{.contexts[0].name}')
+          kubectl config use-context "$CONTEXT"
 
-    - name: Verify access
-      run: |
-        kubectl cluster-info
-        kubectl get pods -A
+      - name: Verify access
+        run: |
+          kubectl cluster-info || (echo "::error::Cluster access failed" && exit 1)
+          kubectl get nodes
 
-    - name: Deploy to cluster
-      run: |
-        kubectl apply -f k8s/
+      - name: Deploy to cluster
+        run: |
+          # Add health checks for Minikube
+          minikube status || minikube start --wait=all
+          kubectl apply -f k8s/
+          kubectl rollout status deployment/your-deployment --timeout=90s
   
 
   model-versioning:
