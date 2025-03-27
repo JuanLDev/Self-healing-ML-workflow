@@ -153,20 +153,13 @@ jobs:
 
       - name: Track model with DVC
         run: |
-          # Add the newly downloaded file to DVC
           dvc add downloaded_models/stock_forex_price_prediction_model.zip
-
-          # Stage the .dvc file(s) for commit
           git add downloaded_models/stock_forex_price_prediction_model.zip.dvc
-
-          # Also stage changes to dvc.lock if it updated
           git add dvc.lock
 
-          # Commit & push to your repo
           git commit -m "Add/Update model from MinIO via CI"
           git push
 
       - name: Push data/model to DVC remote
         run: |
-          # Ensure .dvc/config is configured to point to your MinIO remote
           dvc push
