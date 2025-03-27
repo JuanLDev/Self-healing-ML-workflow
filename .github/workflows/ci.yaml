@@ -141,45 +141,45 @@ jobs:
 
       - name: Download model from MinIO
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+          AWS_ACCESS_KEY_ID: "admin"  
+          AWS_SECRET_ACCESS_KEY: "password"     
         run: |
           mkdir -p downloaded_models
           
-          # First verify MinIO connectivity
-          echo "Verifying MinIO connection..."
-          if ! curl -sSf http://minio-service.default.svc.cluster.local:9000/minio/health/live; then
-            echo "::error::Cannot connect to MinIO. Checking alternatives..."
-            
-            # Fallback to port-forward if direct connection fails
-            kubectl port-forward svc/minio-service 9000:9000 --namespace=default &
-            sleep 5
-            export ENDPOINT_URL="http://localhost:9000"
+          # 1. Verify MinIO pod status
+          echo "Checking MinIO pod..."
+          kubectl get pods -l app=minio -n default
+          MINIO_POD=$(kubectl get pod -l app=minio -n default -o jsonpath='{.items[0].metadata.name}')
+          kubectl logs $MINIO_POD -n default --tail=5
+          
+          # 2. Create temporary port-forward
+          echo "Establishing port-forward..."
+          kubectl port-forward svc/minio-service 9000:9000 -n default --address 0.0.0.0 > /dev/null 2>&1 &
+          sleep 10  # Wait for port-forward stabilization
+          
+          # 3. Verify MinIO connectivity
+          echo "Testing MinIO connection..."
+          curl -sSf http://localhost:9000/minio/health/live || {
+            echo "::error::MinIO health check failed"
+            exit 1
+          }
+          
+          # 4. Download with AWS CLI (using localhost via port-forward)
+          echo "Downloading model..."
+          aws --endpoint-url "http://localhost:9000" s3 cp \
+            s3://models/stock_forex_price_prediction_model.zip \
+            downloaded_models/stock_forex_price_prediction_model.zip || {
+            echo "::error::Download failed"
+            exit 1
+          }
+          
+          # 5. Verify download
+          if [ -s "downloaded_models/stock_forex_price_prediction_model.zip" ]; then
+            echo "Download successful! Size: $(du -h downloaded_models/stock_forex_price_prediction_model.zip | cut -f1)"
           else
-            export ENDPOINT_URL="http://minio-service.default.svc.cluster.local:9000"
+            echo "::error::Downloaded file is empty"
+            exit 1
           fi
-          
-          # Download with retries and checksum verification
-          for i in {1..3}; do
-            echo "Attempt $i to download model..."
-            if aws --endpoint-url "$ENDPOINT_URL" s3 cp \
-                s3://models/stock_forex_price_prediction_model.zip \
-                downloaded_models/stock_forex_price_prediction_model.zip; then
-                
-              # Verify download integrity
-              if [ $(stat -c%s "downloaded_models/stock_forex_price_prediction_model.zip") -lt 1000 ]; then
-                echo "::warning::Downloaded file seems too small, retrying..."
-                rm -f downloaded_models/stock_forex_price_prediction_model.zip
-                continue
-              fi
-              echo "Download successful!"
-              exit 0
-            fi
-            sleep $((i * 2)) # Exponential backoff
-          done
-          
-          echo "::error::Failed to download model after 3 attempts"
-          exit 1
         
 
       - name: Track model with DVC
