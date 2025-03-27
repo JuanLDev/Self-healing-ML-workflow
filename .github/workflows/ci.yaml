@@ -130,14 +130,44 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup DVC & Pull Latest Data
+      - name: Install Python & DVC
         run: |
+          python -m pip install --upgrade pip
           pip install dvc
-          dvc pull
 
-      - name: Push New Model to DVC
+      - name: Install AWS CLI (for MinIO, which is S3-compatible)
         run: |
-          dvc add models/stock_forex_price_prediction_model.zip
-          git add models.dvc
-          git commit -m "Updated model version with DVC"
+          pip install awscli
+
+      - name: Download model from MinIO
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+        run: |
+          # Create a clearly named local directory so we don't conflict with bucket name "models"
+          mkdir -p downloaded_models
+
+          # Replace the endpoint, bucket, and file path with your actual values
+          aws --endpoint-url ${{ secrets.MINIO_ENDPOINT }} s3 cp \
+              s3://models/stock_forex_price_prediction_model.zip \
+              downloaded_models/stock_forex_price_prediction_model.zip
+
+      - name: Track model with DVC
+        run: |
+          # Add the newly downloaded file to DVC
+          dvc add downloaded_models/stock_forex_price_prediction_model.zip
+
+          # Stage the .dvc file(s) for commit
+          git add downloaded_models/stock_forex_price_prediction_model.zip.dvc
+
+          # Also stage changes to dvc.lock if it updated
+          git add dvc.lock
+
+          # Commit & push to your repo
+          git commit -m "Add/Update model from MinIO via CI"
           git push
+
+      - name: Push data/model to DVC remote
+        run: |
+          # Ensure .dvc/config is configured to point to your MinIO remote
+          dvc push
