@@ -77,54 +77,54 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: 1
 
-      #- name: Run Snyk scan
-       # uses: snyk/actions/docker@master
-        #with:
-         # image: docker.io/juanlugodev/fastapi-model:latest
-          #args: --severity-threshold=high --file=./model_api/Dockerfile --exit-code=0
-        #env:
-          #SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      # - name: Run Snyk scan
+      #   uses: snyk/actions/docker@master
+      #   with:
+      #     image: docker.io/juanlugodev/fastapi-model:latest
+      #     args: --severity-threshold=high --file=./model_api/Dockerfile --exit-code=0
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
 
-  deploy:
-    name: Deploy to Kubernetes
-    runs-on: ubuntu-latest
-    needs: security-scan
+  # deploy:
+  #   name: Deploy to Kubernetes
+  #   runs-on: ubuntu-latest
+  #   needs: security-scan
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v3
 
-      - name: Set up kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_DATA }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
+  #     - name: Set up kubeconfig
+  #       run: |
+  #         mkdir -p ~/.kube
+  #         echo "${{ secrets.KUBECONFIG_DATA }}" > ~/.kube/config
+  #         chmod 600 ~/.kube/config
 
-          kubectl config view
-          kubectl config get-contexts
-          kubectl cluster-info
+  #         kubectl config view
+  #         kubectl config get-contexts
+  #         kubectl cluster-info
 
-      - name: Apply Kubernetes Manifests
-        run: |
-          kubectl apply -f kubernetes/minio-deployment.yaml
-          kubectl apply -f kubernetes/minio-service.yaml
-          kubectl apply -f kubernetes/model-api-deployment.yaml
-          kubectl apply -f kubernetes/model-api-service.yaml
-          kubectl rollout status deployment/model-api -n default
+  #     - name: Apply Kubernetes Manifests
+  #       run: |
+  #         kubectl apply -f kubernetes/minio-deployment.yaml
+  #         kubectl apply -f kubernetes/minio-service.yaml
+  #         kubectl apply -f kubernetes/model-api-deployment.yaml
+  #         kubectl apply -f kubernetes/model-api-service.yaml
+  #         kubectl rollout status deployment/model-api -n default
 
-      - name: Apply Tekton Pipelines
-        run: |
-          kubectl apply -f ml-pipeline/tekton_pipeline.yaml
-          kubectl apply -f ml-pipeline/tekton_task_datafetch.yaml
-          kubectl apply -f ml-pipeline/tekton_task_dataingestion.yaml
-          kubectl apply -f ml-pipeline/tekton_task_modeltraining.yaml
-          kubectl apply -f ml-pipeline/tekton_pipelinerun.yaml
+  #     - name: Apply Tekton Pipelines
+  #       run: |
+  #         kubectl apply -f ml-pipeline/tekton_pipeline.yaml
+  #         kubectl apply -f ml-pipeline/tekton_task_datafetch.yaml
+  #         kubectl apply -f ml-pipeline/tekton_task_dataingestion.yaml
+  #         kubectl apply -f ml-pipeline/tekton_task_modeltraining.yaml
+  #         kubectl apply -f ml-pipeline/tekton_pipelinerun.yaml
 
   model-versioning:
     name: Data & Model Versioning (DVC)
     runs-on: ubuntu-latest
-    needs: deploy
+    needs: security-scan
 
     steps:
       - name: Checkout Repository
