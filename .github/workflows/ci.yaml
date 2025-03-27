@@ -144,7 +144,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
         run: |
-          # Create a clearly named local directory so we don't conflict with the bucket name "models"
           mkdir -p downloaded_models
       
           aws --endpoint-url "${{ secrets.MINIO_ENDPOINT }}" s3 cp \
