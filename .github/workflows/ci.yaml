@@ -86,7 +86,8 @@ jobs:
       #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   deploy:
-    runs-on: self-hosted
+    name: Deploy to kubernetes
+    runs-on: [self-hosted, minikube]
     needs: security-scan
     steps:
       - name: Checkout code
