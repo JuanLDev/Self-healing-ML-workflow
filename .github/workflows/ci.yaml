@@ -92,14 +92,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure Kubernetes
+      - name: Set up kubeconfig
         run: |
           mkdir -p ~/.kube
-          # Use raw kubeconfig with embedded certs
-          echo '${{ secrets.KUBE_CONFIG }}' | base64 -d > ~/.kube/config
-          # Auto-detect context (more reliable than hardcoded "minikube")
-          CONTEXT=$(kubectl config view -o jsonpath='{.contexts[0].name}')
-          kubectl config use-context "$CONTEXT"
+          echo "${{ secrets.KUBECONFIG_DATA }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+      
+          # Debug step: show the file's contents
+          # (In a private repo, or behind "if: ${{ false }}" so you don't leak secrets)
+          cat ~/.kube/config
+          
+          kubectl config view
+          kubectl config get-contexts
+      
 
       - name: Verify cluster access
         run: |
