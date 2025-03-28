@@ -182,17 +182,29 @@ jobs:
           
           # 6. Clean up port-forward
           pkill -f "port-forward" || true
+
+      - name: Configure default DVC remote
+        run: |
+          dvc remote add -d minio-remote s3://models
+          dvc remote modify minio-remote endpointurl http://localhost:9000
+          dvc remote modify minio-remote access_key_id ${{ secrets.MINIO_ACCESS_KEY }}
+          dvc remote modify minio-remote secret_access_key ${{ secrets.MINIO_SECRET_KEY }}
+      
+          # Optional: commit the .dvc/config so it stays in your repo
+          git add .dvc/config
+          git commit -m "Add default DVC remote in pipeline"
+          git push
+        
         
 
       - name: Track model with DVC
         run: |
           dvc add downloaded_models/model.zip
           git add downloaded_models/model.zip.dvc
-          # git add dvc.lock
-
           git commit -m "Add/Update model from MinIO"
           git push
-
+        
       - name: Push data/model to DVC remote
         run: |
           dvc push
+        
