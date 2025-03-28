@@ -120,7 +120,7 @@ jobs:
 
   model-versioning:
     name: Data & Model Versioning (DVC)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, minikube]
     needs: deploy
 
     steps:
