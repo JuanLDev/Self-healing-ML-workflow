@@ -204,7 +204,13 @@ jobs:
           git commit -m "Add/Update model from MinIO"
           git push
         
+      - name: Start port-forward for DVC push
+        run: |
+          kubectl port-forward svc/minio-service 9000:9000 -n default --address 0.0.0.0 > /dev/null 2>&1 &
+          sleep 10  # Wait for port-forward to become stable
+        
       - name: Push data/model to DVC remote
         run: |
           dvc push
-        
+          pkill -f "port-forward" || true
+      
