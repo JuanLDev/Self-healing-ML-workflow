@@ -185,7 +185,7 @@ jobs:
         run: |
           dvc add downloaded_models/model.zip
           git add downloaded_models/model.zip.dvc
-          git add dvc.lock
+          # git add dvc.lock
 
           git commit -m "Add/Update model from MinIO"
           git push
