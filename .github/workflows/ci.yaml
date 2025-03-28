@@ -93,33 +93,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up kubeconfig
+      - name: Start or verify minikube
+        run: |
+          minikube status || minikube start --wait=all
+          # If you want to rely purely on secrets-based config, do NOT run `minikube update-context`.
+          # Instead, keep your secrets' kubeconfig up to date with the right port each time.
+
+      - name: Set up kubeconfig from secrets
         run: |
           mkdir -p ~/.kube
           echo "${{ secrets.KUBECONFIG_DATA }}" > ~/.kube/config
           chmod 600 ~/.kube/config
-      
-          # Debug step: show the file's contents
-          # (In a private repo, or behind "if: ${{ false }}" so you don't leak secrets)
-          cat ~/.kube/config
-          
           kubectl config view
           kubectl config get-contexts
-      
 
       - name: Verify cluster access
         run: |
-          kubectl config get-contexts
           kubectl cluster-info
           kubectl get nodes
 
       - name: Deploy to cluster
         run: |
-          # Add health checks for Minikube
-          minikube status || minikube start --wait=all
           kubectl apply -f k8s/
           kubectl rollout status deployment/your-deployment --timeout=90s
-  
+
 
   model-versioning:
     name: Data & Model Versioning (DVC)
