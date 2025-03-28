@@ -112,10 +112,10 @@ jobs:
           kubectl cluster-info
           kubectl get nodes
 
-      - name: Deploy to cluster
-        run: |
-          kubectl apply -f k8s/
-          kubectl rollout status deployment/your-deployment --timeout=90s
+      # - name: Deploy to cluster
+      #   run: |
+      #     kubectl apply -f kubernetes/
+      #     kubectl rollout status deployment/your-deployment --timeout=90s
 
 
   model-versioning:
