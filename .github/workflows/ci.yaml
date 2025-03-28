@@ -101,9 +101,10 @@ jobs:
           CONTEXT=$(kubectl config view -o jsonpath='{.contexts[0].name}')
           kubectl config use-context "$CONTEXT"
 
-      - name: Verify access
+      - name: Verify cluster access
         run: |
-          kubectl cluster-info || (echo "::error::Cluster access failed" && exit 1)
+          kubectl config get-contexts
+          kubectl cluster-info
           kubectl get nodes
 
       - name: Deploy to cluster
