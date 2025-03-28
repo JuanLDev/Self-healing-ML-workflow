@@ -93,19 +93,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Start or verify minikube
+      - name: verify minikube
         run: |
           minikube status || minikube start --wait=all
-          # If you want to rely purely on secrets-based config, do NOT run `minikube update-context`.
-          # Instead, keep your secrets' kubeconfig up to date with the right port each time.
-
-      - name: Set up kubeconfig from secrets
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_DATA }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
+          minikube update-context
           kubectl config view
-          kubectl config get-contexts
+          kubectl get pods
+
+      # - name: Set up kubeconfig from secrets
+      #   run: |
+      #     mkdir -p ~/.kube
+      #     chmod 600 ~/.kube/config
+      #     kubectl config view
+      #     kubectl config get-contexts
 
       - name: Verify cluster access
         run: |
