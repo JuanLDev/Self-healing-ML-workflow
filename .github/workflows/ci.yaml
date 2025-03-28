@@ -190,10 +190,16 @@ jobs:
           dvc remote modify minio-remote access_key_id ${{ secrets.MINIO_ACCESS_KEY }}
           dvc remote modify minio-remote secret_access_key ${{ secrets.MINIO_SECRET_KEY }}
       
-          # Optional: commit the .dvc/config so it stays in your repo
           git add .dvc/config
-          git commit -m "Add default DVC remote in pipeline"
-          git push
+      
+          # Only commit if there are staged changes
+          if ! git diff --cached --quiet; then
+            git commit -m "Ensure default DVC remote in pipeline"
+            git push
+          else
+            echo "No config changes to commit."
+          fi
+        
         
         
 
