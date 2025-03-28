@@ -1,0 +1,7 @@
+[core]
+    remote = myminio
+['remote "myminio"']
+    url = s3://models
+    endpointurl = http://minio-service.default.svc.cluster.local:9000
+    access_key_id = admin
+    secret_access_key = password
