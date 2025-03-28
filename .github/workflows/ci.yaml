@@ -185,7 +185,7 @@ jobs:
 
       - name: Configure default DVC remote
         run: |
-          dvc remote add -d minio-remote s3://models
+          dvc remote add -d --force minio-remote s3://models
           dvc remote modify minio-remote endpointurl http://localhost:9000
           dvc remote modify minio-remote access_key_id ${{ secrets.MINIO_ACCESS_KEY }}
           dvc remote modify minio-remote secret_access_key ${{ secrets.MINIO_SECRET_KEY }}
