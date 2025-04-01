@@ -26,16 +26,16 @@ data:
 
       - job_name: 'kube-state-metrics'
         static_configs:
-          - targets: ['kube-state-metrics.monitoring.svc.cluster.local:8080']
+          - targets: ['kube-state-metrics.kube-system.svc.cluster.local:8080']
       
-      - job_name: 'pods'
-        kubernetes_sd_configs:
-          - role: pod
+      # - job_name: 'pods'
+      #   kubernetes_sd_configs:
+      #     - role: pod
       
-      - job_name: 'services'
-        kubernetes_sd_configs:
-          - role: service
-        relabel_configs:
+      # - job_name: 'services'
+      #   kubernetes_sd_configs:
+      #     - role: service
+      #   relabel_configs:
                 
       - job_name: 'kubernetes-pods-annotation'
         kubernetes_sd_configs:
@@ -63,3 +63,8 @@ data:
         metrics_path: '/minio/metrics/v3'
         static_configs:
           - targets: ['minio-service.default.svc.cluster.local:9000']
+        basic_auth:
+          username: "admin"
+          password: "password"
+        scheme: http
+        
