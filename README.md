@@ -28,21 +28,21 @@ A production-grade, self-healing machine learning workflow built on Kubernetes. 
 
 ## 🔧 Tech Stack
 
-| Category          | Tooling                            |
-|-------------------|-------------------------------------|
-| Containerization  | Docker                             |
-| Orchestration     | Kubernetes (Minikube)              |
-| CI/CD             | GitHub Actions + DockerHub         |
-| ML Framework      | TensorFlow                         |
-| Data Handling     | Pandas, NumPy                      |
-| Serving           | FastAPI + Uvicorn                  |
-| Storage           | MinIO                              |
-| Monitoring        | Prometheus, Grafana                |
-| Logging           | Loki + Promtail                    |
-| Security          | Snyk, Trivy                        |
-| IaC               | Terraform                          |
-| Data Versioning   | DVC                                |
-| Pipelines         | Tekton Pipelines                   |
+                | Category          | Tooling                            |
+                |-------------------|-------------------------------------|
+                | Containerization  | Docker                             |
+                | Orchestration     | Kubernetes (Minikube)              |
+                | CI/CD             | GitHub Actions + DockerHub         |
+                | ML Framework      | TensorFlow                         |
+                | Data Handling     | Pandas, NumPy                      |
+                | Serving           | FastAPI + Uvicorn                  |
+                | Storage           | MinIO                              |
+                | Monitoring        | Prometheus, Grafana                |
+                | Logging           | Loki + Promtail                    |
+                | Security          | Snyk, Trivy                        |
+                | IaC               | Terraform                          |
+                | Data Versioning   | DVC                                |
+                | Pipelines         | Tekton Pipelines                   |
 
 ---
 
@@ -90,10 +90,11 @@ kubectl port-forward svc/model-api-service 8000:80 -n default
 ```
 Then visit: http://localhost:8000/docs
 
+---
 
-🧰 Developer Notes
+##🧰 Developer Notes
 
-⚙️ CI/CD Pipeline
+###⚙️ CI/CD Pipeline
 
 GitHub Actions builds and pushes Docker images for each pipeline step.
 
@@ -109,7 +110,9 @@ model-training
 
 fastapi-model
 
-📦 DVC
+---
+
+###📦 DVC
 
 DVC is used to track raw data, processed files, and trained models.
 
@@ -121,6 +124,7 @@ dvc pull
 dvc push
 dvc repro
 ```
+---
 🔒 Security
 Snyk & Trivy scans added to GitHub Actions
 
@@ -128,7 +132,9 @@ Snyk & Trivy scans added to GitHub Actions
 
 Health probes (/health) added to FastAPI for K8s liveness/readiness
 
-📊 Monitoring & Logs
+---
+
+##📊 Monitoring & Logs
 
 Access Grafana: http://localhost:3000
 
@@ -142,18 +148,10 @@ kubectl port-forward svc/grafana 3000:3000 -n monitoring
 kubectl port-forward svc/minio-service 9001:9001 -n default
 ```
 
-📝 Docs
-
-docs/architecture.md
-
-docs/ci-cd.md
-
-docs/model-api.md
-
-docs/security.md
-
+---
 
 🧠 Author
 Juan Lugo
 GitHub: @juanldev
+
 Built with ❤️ — and a lot of debugging.
