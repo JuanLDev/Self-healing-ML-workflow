@@ -66,58 +66,35 @@ A production-grade, self-healing machine learning workflow built on Kubernetes. 
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/<your-username>/self-healing-ml-workflow.git
+git clone https://github.com/JuanLDev/self-healing-ml-workflow.git
 cd self-healing-ml-workflow
+```
 
-2. **Start Minikube & apply Terraform**
-
+2. *Start Minikube & apply Terraform*
+```bash
 minikube start
 cd terraform
 terraform init
 terraform apply -auto-approve
+```
 
-3. **Run Tekton Pipelines**
-
+3. *Run Tekton Pipelines*
+```bash
 tkn pipeline start ml-pipeline
 tkn pipelinerun logs -f
+```
 
-4. **Expose FastAPI for model inference**
-
-bash
-Copy
-Edit
+4. *Expose FastAPI for model inference*
+```bash
 kubectl port-forward svc/model-api-service 8000:80 -n default
+```
 Then visit: http://localhost:8000/docs
 
-🧪 API Usage
-🔍 Predict Price
-Endpoint:
 
-http
-Copy
-Edit
-POST /predict/
-Payload:
-
-json
-Copy
-Edit
-{
-  "open": 100.0,
-  "high": 102.0,
-  "low": 98.0,
-  "volume": 2500000
-}
-Response:
-
-json
-Copy
-Edit
-{
-  "predicted_price": 101.23
-}
 🧰 Developer Notes
+
 ⚙️ CI/CD Pipeline
+
 GitHub Actions builds and pushes Docker images for each pipeline step.
 
 Security scans via Snyk and Trivy.
@@ -133,18 +110,17 @@ model-training
 fastapi-model
 
 📦 DVC
+
 DVC is used to track raw data, processed files, and trained models.
 
 Remote storage: MinIO
 
 Example commands:
-
-bash
-Copy
-Edit
+```bash
 dvc pull
 dvc push
 dvc repro
+```
 🔒 Security
 Snyk & Trivy scans added to GitHub Actions
 
@@ -153,6 +129,7 @@ Snyk & Trivy scans added to GitHub Actions
 Health probes (/health) added to FastAPI for K8s liveness/readiness
 
 📊 Monitoring & Logs
+
 Access Grafana: http://localhost:3000
 
 Access Prometheus: http://localhost:9090
@@ -160,13 +137,13 @@ Access Prometheus: http://localhost:9090
 Access MinIO: http://localhost:9001
 
 Use port forwarding if needed:
-
-bash
-Copy
-Edit
+```bash
 kubectl port-forward svc/grafana 3000:3000 -n monitoring
 kubectl port-forward svc/minio-service 9001:9001 -n default
+```
+
 📝 Docs
+
 docs/architecture.md
 
 docs/ci-cd.md
@@ -175,18 +152,8 @@ docs/model-api.md
 
 docs/security.md
 
-✅ Status: Finalizing
-✔️ CI/CD
-✔️ Security
-✔️ ML Pipeline
-✔️ FastAPI Inference
-✔️ Monitoring & Logging
-⬜ Final Test
-⬜ Final Documentation
 
 🧠 Author
 Juan Lugo
 GitHub: @juanldev
-Built with ❤️ and a lot of debugging.
-
-
+Built with ❤️ — and a lot of debugging.
