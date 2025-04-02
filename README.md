@@ -1,6 +1,6 @@
 # 🧠 Self-Healing ML Workflow for Stock & Forex Predictions
 
-A production-grade, self-healing machine learning workflow built on Kubernetes. This system fetches financial data, processes it, trains models, version-controls data & models with DVC, and serves predictions via a FastAPI microservice.
+A production grade, self-healing machine learning workflow built on Kubernetes. This system fetches financial data, processes it, trains models, version-controls data & models with DVC, and serves predictions via a FastAPI microservice.
 
 ---
 
@@ -100,19 +100,11 @@ GitHub Actions builds and pushes Docker images for each pipeline step.
 
 Security scans via Snyk and Trivy.
 
-Build matrix includes:
-
-data-fetch
-
-data-ingestion
-
-model-training
-
-fastapi-model
+Build matrix includes: data-fetch, data-ingestion, model-training, fastapi-model
 
 ---
 
-### 📦 DVC
+## 📦 DVC
 
 DVC is used to track raw data, processed files, and trained models.
 
@@ -125,7 +117,8 @@ dvc push
 dvc repro
 ```
 ---
-🔒 Security
+## 🔒 Security
+
 Snyk & Trivy scans added to GitHub Actions
 
 .snyk & .trivyignore files in place to suppress low-risk warnings
