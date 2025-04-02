@@ -7,4 +7,4 @@ positions:
   /var/log/install.log: "21709555"
   /var/log/shutdown_monitor.log: "6098"
   /var/log/system.log: "1969"
-  /var/log/wifi.log: "830822"
+  /var/log/wifi.log: "840002"

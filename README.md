@@ -29,7 +29,7 @@ A production-grade, self-healing machine learning workflow built on Kubernetes. 
 ## 🔧 Tech Stack
 
                 | Category          | Tooling                            |
-                |-------------------|-------------------------------------|
+                |-------------------|------------------------------------|
                 | Containerization  | Docker                             |
                 | Orchestration     | Kubernetes (Minikube)              |
                 | CI/CD             | GitHub Actions + DockerHub         |
@@ -92,9 +92,9 @@ Then visit: http://localhost:8000/docs
 
 ---
 
-##🧰 Developer Notes
+## 🧰 Developer Notes
 
-###⚙️ CI/CD Pipeline
+### ⚙️ CI/CD Pipeline
 
 GitHub Actions builds and pushes Docker images for each pipeline step.
 
@@ -112,7 +112,7 @@ fastapi-model
 
 ---
 
-###📦 DVC
+### 📦 DVC
 
 DVC is used to track raw data, processed files, and trained models.
 
@@ -134,7 +134,7 @@ Health probes (/health) added to FastAPI for K8s liveness/readiness
 
 ---
 
-##📊 Monitoring & Logs
+## 📊 Monitoring & Logs
 
 Access Grafana: http://localhost:3000
 
