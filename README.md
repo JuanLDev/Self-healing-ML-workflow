@@ -5,23 +5,7 @@ A production grade, self-healing machine learning workflow built on Kubernetes. 
 ---
 
 ## 🏗️ Architecture Overview
-
-                      ┌────────────────────────────┐
-                      │       GitHub Actions       │
-                      │  (CI/CD + Image Builds)    │
-                      └────────────┬───────────────┘
-                                   │
-                                   ▼
-┌────────────────────┐ ┌────────────────────────────┐ ┌────────────────────────────┐ │ Data Fetching │ ──► │ Data Ingestion & │ ──► │ Model Training + Upload │ │ (Yahoo Finance API)│ │ Preprocessing │ │ (TensorFlow + MinIO Upload) │ └────────────────────┘ └────────────────────────────┘ └────────────────────────────┘ ▲ ▲ ▲ │ │ │ CronJob/Tekton Pipelines orchestrate everything │ ▼ ▼ │ Raw Data Processed JSON Model ZIP (.keras) (MinIO - raw-data) (MinIO - processed-data) (MinIO - models)
-                                    │
-                                    ▼
-                     ┌─────────────────────────────────┐
-                     │     FastAPI Model Inference      │
-                     │     (Deployed via Kubernetes)    │
-                     └─────────────────────────────────┘
-                                    │
-                                    ▼
-                        🚀 Predict Endpoint: `/predict/`
+![Self-Healing Machine Learning Workflow](assets/ml-workflow.png)
                 
 
 ---

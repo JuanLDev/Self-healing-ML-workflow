@@ -34,7 +34,7 @@ docker_build(
 )
 
 ###########################################################
-# 2) Apply all Tekton + MinIO YAML via k8s_yaml
+# 2) Apply all Tekton + MinIO via k8s_yaml
 ###########################################################
 k8s_yaml([
     # MinIO (assuming you have these YAMLs in `kubernetes/`)
