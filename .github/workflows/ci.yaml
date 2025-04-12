@@ -141,7 +141,7 @@ jobs:
 
       - name: Download model from MinIO
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}  # From your MinIO deployment
+          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY }}  
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_KEY }}
         run: |
           # 1. Create directory structure
