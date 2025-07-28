@@ -6,3 +6,4 @@ minio
 python-dotenv
 setuptools==70.0.0
 tensorflow-cpu==2.16.1
+starlette>=0.47.2 # not directly required, pinned by Snyk to avoid a vulnerability
