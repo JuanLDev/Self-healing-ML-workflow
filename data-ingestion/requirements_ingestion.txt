@@ -4,3 +4,4 @@ boto3
 minio
 flask
 prometheus_client
+werkzeug>=3.1.4 # not directly required, pinned by Snyk to avoid a vulnerability
