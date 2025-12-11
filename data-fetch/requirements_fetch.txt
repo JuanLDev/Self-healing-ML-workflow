@@ -5,3 +5,4 @@ minio
 requests
 prometheus_client
 yfinance
+urllib3>=2.6.0 # not directly required, pinned by Snyk to avoid a vulnerability
